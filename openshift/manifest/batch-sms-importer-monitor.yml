@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: batch-sms-importer-monitor
+spec:
+  endpoints:
+    - interval: 10s
+      port: web
+      path: /q/metrics
+      scheme: http
+  selector:
+    matchLabels:
+      app: batch-sms-importer
