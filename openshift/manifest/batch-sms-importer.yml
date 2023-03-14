@@ -1,0 +1,98 @@
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: batch-sms-importer-config
+data:
+  FTP_SERVER_SERVICE_HOST: bastion.md95m.sandbox2302.opentlc.com
+  FTP_SERVER_SERVICE_PORT: '22'
+  kafka.bootstrap.servers: kafka-kafka-bootstrap:9092
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: batch-sms-importer-config
+data:
+  FTP_PASSWORD: cGFzc3dvcmQ=
+  FTP_USER: c21zaW1wb3J0
+type: Opaque
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: batch-sms-importer
+    app.openshift.io/runtime: quarkus
+  name: batch-sms-importer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: batch-sms-importer
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: batch-sms-importer
+        deployment: batch-sms-importer
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: batch-sms-importer-config
+        - configMapRef:
+            name: batch-sms-importer-config
+        image: docker.io/audomsak/batch-sms-importer:1.0
+        name: batch-sms-importer
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop:
+              - ALL
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: batch-sms-importer
+  name: batch-sms-importer
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: batch-sms-importer
+    deployment: batch-sms-importer
+
+---
+
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: batch-sms-importer
+  name: batch-sms-importer
+spec:
+  port:
+    targetPort: web
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: batch-sms-importer
+    weight: 100
+  wildcardPolicy: None
