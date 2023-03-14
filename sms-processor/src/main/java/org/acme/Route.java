@@ -15,7 +15,7 @@ public class Route extends RouteBuilder {
                 .logStackTrace(true)
                 .log(LoggingLevel.ERROR, "There was an error occurred. ${exception}");
 
-        from("kafka:{{kafka.topic.name}}")
+        from("kafka:{{kafka.topic.name}}?groupId=sms-processor-group")
                 .routeId("kafka-to-db")
                 .log("Consumed messages: ${body}")
                 .unmarshal().json(SmsMessage.class)
