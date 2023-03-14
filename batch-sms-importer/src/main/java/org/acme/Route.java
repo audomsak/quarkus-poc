@@ -13,9 +13,11 @@ public class Route extends RouteBuilder {
     @Override
     public void configure() throws Exception {
         getContext().setManagementName("batch-sms-importer");
+        getContext().setUseMDCLogging(true);
 
         onException(Exception.class)
                 .handled(true)
+                .logHandled(true)
                 .logStackTrace(true)
                 .log(LoggingLevel.ERROR, "There was an error occurred. ${exception}");
 
