@@ -13,5 +13,7 @@
         <module>sms-processor</module>
         <module>quarkus-sftp</module>
         <module>quarkus-kafka</module>
+        <module>log-producer</module>
+        <module>log-transformation</module>
     </modules>
 </project>
