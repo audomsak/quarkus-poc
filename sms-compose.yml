@@ -1,0 +1,48 @@
+services:
+  sftp:
+    container_name: sftp-server
+    image: atmoz/sftp
+    volumes:
+      - ./upload:/upload
+    ports:
+      - "22222:22"
+    command: sftpuser:password:::upload
+
+  postgres:
+    container_name: postgresql
+    image: docker.io/postgres:17-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=testdb
+
+  zookeeper:
+    container_name: zookeeper
+    image: quay.io/strimzi/kafka:0.45.0-kafka-3.9.0
+    command:
+      ["sh", "-c", "bin/zookeeper-server-start.sh config/zookeeper.properties"]
+    ports:
+      - "2181:2181"
+    environment:
+      LOG_DIR: /tmp/logs
+
+  kafka:
+    container_name: kafka
+    image: quay.io/strimzi/kafka:0.45.0-kafka-3.9.0
+    command:
+      [
+        "sh",
+        "-c",
+        "bin/kafka-server-start.sh config/server.properties --override listeners=$${KAFKA_LISTENERS} --override advertised.listeners=$${KAFKA_ADVERTISED_LISTENERS} --override zookeeper.connect=$${KAFKA_ZOOKEEPER_CONNECT}",
+      ]
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      LOG_DIR: "/tmp/logs"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
